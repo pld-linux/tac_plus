@@ -2,14 +2,14 @@
 %define subver	alpha
 
 Summary:	Cisco Tacacs+ Daemon
+Summary(pl):	Demon Cisco Tacacs+
 Name:		tac_plus
 Version:	F4.0.3
 Release:	0.alpha.9a.0
 Epoch:		0
-Copyright:	Cisco systems, Inc.
+License:	BSD-like
 Group:		Networking/Daemons
-URL:		http://www.gazi.edu.tr/tacacs
-Source0:	%{name}.%{version}.%{subver}.tar.Z
+Source0:	http://www.gazi.edu.tr/tacacs/src/%{name}.%{version}.%{subver}.tar.Z
 # Source0-md5:	451d92503b5832a848c1b76ce58a4636
 Source1:	%{name}.cfg
 Source2:	%{name}.init
@@ -20,31 +20,38 @@ Source6:	%{name}.rotate
 Source7:	README.LDAP
 Patch0:		%{name}.patch
 Patch1:		%{name}_v9a.patch
+URL:		http://www.gazi.edu.tr/tacacs/
 BuildRequires:	autoconf
-BuildRequires:	pam-devel
 BuildRequires:	libwrap-devel
+BuildRequires:	pam-devel
 PreReq:		rc-scripts
+Requires(pre):	fileutils
 Requires(post,preun):	/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
-TACACS+ daemon using with Cisco's NASs (Or other vendors) for AAA
-(Authentication , Authorization and Accounting) propose.
+TACACS+ daemon using with Cisco's NASs (or other vendors) for AAA
+(Authentication, Authorization and Accounting) propose.
 
+%description -l pl
+Demon TACACS+ u¿ywany wraz z NAS-ami Cisco (lub innych producentów) do
+celów uwierzytelniania, autoryzacji i rozliczania (AAA -
+Authentication, Authorization and Accounting).
 
 %prep
 %setup -q -n tac_plus.%{version}.%{subver}
 %patch0 -p1
 %patch1 -p1
 
+rm -f configure
+
 %build
-rm configure
 %{__autoconf}
 %configure \
-    --with-pam \
-    --enable-maxsess \
-    --with-libwrap \
-    --without-db
+	--with-pam \
+	--enable-maxsess \
+	--with-libwrap \
+	--without-db
 
 # configure script have some options describe below
 # --with-pam  : For PAM support
@@ -66,31 +73,30 @@ rm configure
 
 %{__make} tac_plus
 
-
 %install
 rm -rf $RPM_BUILD_ROOT
 
 %{__make} rpm_install \
-    DESTDIR=$RPM_BUILD_ROOT
+	DESTDIR=$RPM_BUILD_ROOT
 
-install -d $RPM_BUILD_ROOT%{_sysconfdir}{/tacacs,/logrotate.d,/pam.d,/rc.d{/init.d,/rc{0,1,2,3,4,5,6}.d}}
-install %SOURCE2 $RPM_BUILD_ROOT/etc/rc.d/init.d/tac_plus
-install %SOURCE1 $RPM_BUILD_ROOT%{_sysconfdir}/tacacs/
-install %SOURCE3 $RPM_BUILD_ROOT/etc/pam.d/pap
-install %SOURCE6 $RPM_BUILD_ROOT/etc/logrotate.d/tac_plus
+install -d $RPM_BUILD_ROOT{%{_sysconfdir}/tacacs,/etc/{logrotate.d,pam.d,rc.d/init.d}}
+install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tac_plus
+install %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/tacacs
+install %{SOURCE3} $RPM_BUILD_ROOT/etc/pam.d/pap
+install %{SOURCE6} $RPM_BUILD_ROOT/etc/logrotate.d/tac_plus
 
-install {%SOURCE4,%SOURCE5,%SOURCE7} %{_builddir}/%{name}.%{version}.%{subver}
+install {%{SOURCE4},%{SOURCE5},%{SOURCE7}} .
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %pre
 if [ -f /etc/tacacs/tac_plus.cfg ]; then
-	cp -a /etc/tacacs/tac_plus.cfg /etc/tacacs/tac_plus.cfg.old
+	cp -af /etc/tacacs/tac_plus.cfg /etc/tacacs/tac_plus.cfg.old
 fi
 
 if [ -f /etc/tacacs/tac_plus.pam ]; then
-	cp /etc/pam.d/tac_plus.pam /etc/pam.d/tac_plus.pam.old
+	cp -f /etc/pam.d/tac_plus.pam /etc/pam.d/tac_plus.pam.old
 fi
 
 %post
@@ -98,21 +104,21 @@ fi
 echo "Type \"/etc/rc.d/init.d/tac_plus start\" to start tac_plus" 1>&2
 
 %preun
-if [ $1 = 0 ]; then
-   if [ -f /var/lock/subsys/tac_plus ]; then
-      /etc/rc.d/init.d/tac_plus stop
-   fi
-   /sbin/chkconfig --del tac_plus
+if [ "$1" = "0" ]; then
+	if [ -f /var/lock/subsys/tac_plus ]; then
+		/etc/rc.d/init.d/tac_plus stop
+	fi
+	/sbin/chkconfig --del tac_plus
 fi
 
 %files
 %defattr(644,root,root,755)
-%dir %{_sysconfdir}/tacacs
-%config /etc/logrotate.d/tac_plus
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tacacs/tac_plus.cfg
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/pap
-%attr(754,root,root) 		/etc/rc.d/init.d/tac_plus
-%attr(755,root,root) 		%{_sbindir}/generate_passwd
-%attr(755,root,root) 		%{_sbindir}/tac_plus
-%attr(644,root,root) 		%{_mandir}/man1/*
 %doc users_guide CHANGES convert.pl README.PAM tac_plus.sql README.LDAP
+%attr(755,root,root) %{_sbindir}/generate_passwd
+%attr(755,root,root) %{_sbindir}/tac_plus
+%dir %{_sysconfdir}/tacacs
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tacacs/tac_plus.cfg
+%config(noreplace) %verify(not size mtime md5) /etc/logrotate.d/tac_plus
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/pap
+%attr(754,root,root) /etc/rc.d/init.d/tac_plus
+%{_mandir}/man1/*
