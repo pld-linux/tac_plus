@@ -22,7 +22,7 @@ Source8:	%{name}
 Patch0:		%{name}.patch
 Patch1:		%{name}_v9a.patch
 URL:		http://www.gazi.edu.tr/tacacs/
-BuildRequires:  automake
+BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	libwrap-devel
 BuildRequires:	pam-devel
