@@ -5,7 +5,7 @@ Summary:	Cisco Tacacs+ Daemon
 Summary(pl):	Demon Cisco Tacacs+
 Name:		tac_plus
 Version:	F4.0.3
-Release:	0.alpha.9a.0
+Release:	0.alpha.9a.1
 Epoch:		0
 License:	BSD-like
 Group:		Networking/Daemons
@@ -18,6 +18,7 @@ Source4:	README.PAM
 Source5:	%{name}.sql
 Source6:	%{name}.rotate
 Source7:	README.LDAP
+Source8:	%{name}
 Patch0:		%{name}.patch
 Patch1:		%{name}_v9a.patch
 URL:		http://www.gazi.edu.tr/tacacs/
@@ -82,11 +83,12 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} rpm_install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-install -d $RPM_BUILD_ROOT{%{_sysconfdir}/tacacs,/etc/{logrotate.d,pam.d,rc.d/init.d}}
+install -d $RPM_BUILD_ROOT{%{_sysconfdir}/tacacs,/etc/{logrotate.d,pam.d,rc.d/init.d,sysconfig}}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tac_plus
 install %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/tacacs
-install %{SOURCE3} $RPM_BUILD_ROOT/etc/pam.d/pap
+install %{SOURCE3} $RPM_BUILD_ROOT/etc/pam.d/tac_plus
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/logrotate.d/tac_plus
+install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/tac_plus
 
 install {%{SOURCE4},%{SOURCE5},%{SOURCE7}} .
 
@@ -94,13 +96,6 @@ install {%{SOURCE4},%{SOURCE5},%{SOURCE7}} .
 rm -rf $RPM_BUILD_ROOT
 
 %pre
-if [ -f /etc/tacacs/tac_plus.cfg ]; then
-	cp -af /etc/tacacs/tac_plus.cfg /etc/tacacs/tac_plus.cfg.old
-fi
-
-if [ -f /etc/tacacs/tac_plus.pam ]; then
-	cp -f /etc/pam.d/tac_plus.pam /etc/pam.d/tac_plus.pam.old
-fi
 
 %post
 /sbin/chkconfig --add tac_plus
@@ -122,6 +117,7 @@ fi
 %dir %{_sysconfdir}/tacacs
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tacacs/tac_plus.cfg
 %config(noreplace) %verify(not size mtime md5) /etc/logrotate.d/tac_plus
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/pap
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tac_plus
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/tac_plus
 %attr(754,root,root) /etc/rc.d/init.d/tac_plus
 %{_mandir}/man1/*
