@@ -21,6 +21,7 @@ Source7:	README.LDAP
 Patch0:		%{name}.patch
 Patch1:		%{name}_v9a.patch
 URL:		http://www.gazi.edu.tr/tacacs/
+BuildRequires:  automake
 BuildRequires:	autoconf
 BuildRequires:	libwrap-devel
 BuildRequires:	pam-devel
@@ -46,6 +47,8 @@ Authentication, Authorization and Accounting).
 rm -f configure
 
 %build
+cp /usr/share/automake/config.sub .
+%{__aclocal}
 %{__autoconf}
 %configure \
 	--with-pam \
