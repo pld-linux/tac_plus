@@ -16,41 +16,48 @@
 # Source networking configuration.
 . /etc/sysconfig/network
 
+
 # Check that networking is up.
 [ ${NETWORKING} = "no" ] && exit 0
 
 # Some config parameters
-#For config file
+. /etc/sysconfig/tac_plus
+
 tacacs_config="/etc/tacacs/tac_plus.cfg"
-#For debug option
-debug=0
+
+[ -f /etc/sysconfig/tac_plus ] || exit 0
 
 [ -f /usr/sbin/tac_plus ] || exit 0
 
 [ -f $tacacs_config ] || exit 0
 
+if [ -z $TACACS_PORT ]
+    TACACS_PORT=49
+fi
+
+if [ -z $TACACS_DEBUG_LEVEL ]
+    TACACS_DEBUG_LEVEL=0
+fi
 
 # See how we were called.
 case "$1" in
   start)
         # Start daemon.
-	if [ $debug -gt 0 ]
+	if [ $TACACS_DEBUG_LEVEL -gt 0 ]
         then
-        echo -n "Starting TACACS+ with debug level $debug : "
-	daemon tac_plus -C $tacacs_config -d $debug
+    	    echo "Starting TACACS+ with debug level $TACACS_DEBUG_LEVEL : "
+	    daemon tac_plus -C $tacacs_config  -d $TACACS_DEBUG_LEVEL -p $TACACS_PORT
 	else
-	echo -n "Starting TACACS+ :"
-	daemon tac_plus -C $tacacs_config
+	    echo "Starting TACACS+ :"
+	    daemon tac_plus -C $tacacs_config -p $TACACS_PORT
 	fi
-	echo
         touch /var/lock/subsys/tac_plus
         ;;
   stop)
         # Stop daemons.
-        echo -n "Shutting down TACACS+: "
+        echo "Shutting down TACACS+: "
         killproc tac_plus
         rm -f /var/lock/subsys/tac_plus
-        echo
         ;;
   status)
 	status tac_plus	
@@ -68,7 +75,7 @@ case "$1" in
 	;;
   test)
 	echo "TACACS+ config being testing..."
-	/usr/sbin/tac_plus -P -C $tacacs_config
+	/usr/sbin/tac_plus -P -C $tacacs_config -p $TACACS_PORT
 	;;
   *)
         echo "Usage: tac_plus {start|stop|status|restart|reload|test}"
