@@ -23,7 +23,8 @@ Patch1:		%{name}_v9a.patch
 BuildRequires:	autoconf
 BuildRequires:	pam-devel
 BuildRequires:	libwrap-devel
-BuildRequires:	libwrap-devel
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
