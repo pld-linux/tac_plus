@@ -31,11 +31,13 @@ tacacs_config="/etc/tacacs/tac_plus.cfg"
 
 [ -f $tacacs_config ] || exit 0
 
-if [ -z $TACACS_PORT ]
+if [ -z $TACACS_PORT ] 
+then
     TACACS_PORT=49
 fi
 
-if [ -z $TACACS_DEBUG_LEVEL ]
+if [ -z $TACACS_DEBUG_LEVEL ] 
+then
     TACACS_DEBUG_LEVEL=0
 fi
 
@@ -45,17 +47,17 @@ case "$1" in
         # Start daemon.
 	if [ $TACACS_DEBUG_LEVEL -gt 0 ]
         then
-    	    echo "Starting TACACS+ with debug level $TACACS_DEBUG_LEVEL : "
+    	    echo -n "Starting TACACS+ with debug level $TACACS_DEBUG_LEVEL : "
 	    daemon tac_plus -C $tacacs_config  -d $TACACS_DEBUG_LEVEL -p $TACACS_PORT
 	else
-	    echo "Starting TACACS+ :"
+	    echo -n "Starting TACACS+ :"
 	    daemon tac_plus -C $tacacs_config -p $TACACS_PORT
 	fi
         touch /var/lock/subsys/tac_plus
         ;;
   stop)
         # Stop daemons.
-        echo "Shutting down TACACS+: "
+        echo -n "Shutting down TACACS+: "
         killproc tac_plus
         rm -f /var/lock/subsys/tac_plus
         ;;
