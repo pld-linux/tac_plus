@@ -1,0 +1,40 @@
+Tacacs+ with PAM Authentication and Authorization support.
+
+patch version 0.4 (7 February 2000)
+Now Tacacs+ PAM Authorization Working.. 
+I am add some function to do it and also rename tac_pam_acct.c file to  tam_pam.c 
+But we must do more test ..:p 
+devrim(devrim@tef.gazi.edu.tr)
+
+patch version 0.3  (17 November 1999)
+tac_pam_auth is MT-safe now.
+Tacacs reports pam error strings.
+More examples into the tac_plus.conf. Corrected the version number at start-up.
+
+patch version 0.2   (31 August 1999)
+Pammified default authentication. If -DUSE_PAM used, I hope that PAM is the default
+system authentication method. The PAM service used is the name of the passwd_file (???).
+Yes, it's terrible, but I have not time to spend for changing
+default authentication = file /etc/passwd
+         in
+default authentication = pam name_of_service..........any volunteer ???
+As usual, look at the tac_plus.conf file.
+
+patch version 0.1    (August 1999)
+I introduced an optional new authetication method via PAM. This makes authentication
+modular and external to the tacacs+ code.
+I have not implemented pam-authorization because the existence of pre and post autorization
+calls.
+In order to pass tacacs+ attributes to the pam modules, I use the PAM_RUSER item
+for storing the rem_addr. Have a look to tac_pam_auth.c for the details.
+As you can see, pam-authentication only works for pap and login authetication-types:
+I would like to extend it to the default authetication case, but the code seems so
+cryptic :-(.......
+You can choose the pam service by the configuration file,for a simple example look
+into tac_plus.conf.
+
+
+
+Max Liccardo <ravel@tiscalinet.it>
+
+

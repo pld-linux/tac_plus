@@ -1,0 +1,300 @@
+diff -uNr tac_plus_v9/acct.c tac_plus_v9a/acct.c
+--- tac_plus_v9/acct.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/acct.c	Wed Oct 30 12:04:57 2002
+@@ -26,7 +26,7 @@
+ void account();
+ 
+ /* For  DB accounting */
+-#ifdef DB
++#ifdef USE_DB
+ int db_acct();
+ #endif /* DB */
+ 
+@@ -152,7 +152,7 @@
+ 	errors = do_wtmp(&rec);
+     } else {
+ 	errors = do_acct(&rec);
+-#ifdef DB 
++#ifdef USE_DB 
+     if (session.db_acct && rec.acct_type==ACCT_TYPE_STOP )
+ 	db_acct(&rec);
+ #endif
+diff -uNr tac_plus_v9/config.c tac_plus_v9a/config.c
+--- tac_plus_v9/config.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/config.c	Wed Oct 30 12:03:32 2002
+@@ -33,7 +33,7 @@
+                        key = <string>
+ 
+    <authen_default> := default authentication = file <filename> 
+-#if defined(DB)
++#if defined(USE_DB)
+ 		    | db <string> )
+ #endif
+    
+@@ -57,7 +57,7 @@
+ #ifdef USE_PAM		
+ 		       pam <pam_service> |
+ #endif 		
+-#if defined(DB)		
++#if defined(USE_DB)		
+ 			db <string>
+ #endif
+ 		       nopassword
+@@ -584,7 +584,7 @@
+ 	    sym_get();
+ 	    continue;
+ 
+-#ifdef DB	
++#ifdef USE_DB	
+ 	case S_db_accounting:
+ 	    sym_get();
+ 	    parse(S_separator);
+@@ -617,7 +617,7 @@
+ 	        switch(sym_code) {
+                 
+ 		case S_file:
+-#ifdef DB
++#ifdef USE_DB
+ 		case S_db:
+ #endif
+ #ifdef USE_LDAP
+@@ -890,7 +890,7 @@
+ #ifdef USE_PAM	
+ 	    case S_pam:	
+ #endif /* USE_PAM */		
+-#ifdef DB
++#ifdef USE_DB
+ 	    case S_db:
+ #endif /* USE DB */
+ 		sprintf(buf, "%s ", sym_buf);
+diff -uNr tac_plus_v9/configure tac_plus_v9a/configure
+--- tac_plus_v9/configure	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/configure	Wed Oct 30 12:05:52 2002
+@@ -1476,7 +1476,7 @@
+ fi
+ 
+ if test "x$with_db" = "xyes";then
+-	DB="$DB -DDB -DDB_NULL"	
++	DB="$DB -DUSE_DB -DDB_NULL"	
+ 	echo "$ac_t""DB support... yes" 1>&6
+ else
+ 	echo "$ac_t""DB support... no" 1>&6
+diff -uNr tac_plus_v9/configure.in tac_plus_v9a/configure.in
+--- tac_plus_v9/configure.in	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/configure.in	Wed Oct 30 12:05:50 2002
+@@ -83,7 +83,7 @@
+ AC_ARG_WITH(db,
+         [  --with-db		For DB Support   ],,)
+ if test "x$with_db" = "xyes";then
+-	DB="$DB -DDB -DDB_NULL"	
++	DB="$DB -DUSE_DB -DDB_NULL"	
+ 	AC_MSG_RESULT(DB support... yes)
+ else
+ 	AC_MSG_RESULT(DB support... no)
+diff -uNr tac_plus_v9/db.c tac_plus_v9a/db.c
+--- tac_plus_v9/db.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/db.c	Wed Oct 30 12:01:59 2002
+@@ -43,7 +43,7 @@
+    devrim(devrim@gazi.edu.tr)
+ */
+ 
+-#if defined(DB)
++#if defined(USE_DB)
+ #include <stdio.h>
+ #include "tac_plus.h"
+ #include "db.h"
+diff -uNr tac_plus_v9/db.h tac_plus_v9a/db.h
+--- tac_plus_v9/db.h	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/db.h	Wed Oct 30 12:05:27 2002
+@@ -2,7 +2,7 @@
+ 		This is Database Functions header file 
+ */
+ 
+-#if defined(DB)
++#if defined(USE_DB)
+ 
+ /* The databases  recognized by this definition */
+ #define DEFINED_DB {"null","mysql","pgsql"}
+diff -uNr tac_plus_v9/db_mysql.c tac_plus_v9a/db_mysql.c
+--- tac_plus_v9/db_mysql.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/db_mysql.c	Wed Oct 30 13:09:09 2002
+@@ -1,4 +1,4 @@
+-#if defined(DB_MYSQL) && defined(DB)
++#if defined(DB_MYSQL) && defined(USE_DB)
+ /*
+ 
+ 		Writen by Devrim SERAL(devrim@gazi.edu.tr)
+@@ -15,7 +15,7 @@
+ #include <mysql.h>
+ #include "db.h"
+ 
+-MYSQL *mysqldb;
++MYSQL mysqldb;
+ MYSQL_RES *res;
+ MYSQL_ROW row;
+ MYSQL_FIELD *table_field;
+@@ -46,7 +46,7 @@
+ 	
+ /* Connect database server */
+ 
+-   if ( !( mysql_connect(mysqldb,db_hostname,db_user,db_password) ) )
++   if ( !( mysql_connect(&mysqldb,db_hostname,db_user,db_password) ) )
+ 	{
+    	        if (debug & DEBUG_AUTHEN_FLAG)
+ 		    report(LOG_DEBUG, "MySQL: cannot connect as %s", db_user);
+@@ -55,7 +55,7 @@
+ 
+ /*Select tacacs db */
+ 
+-    if ( mysql_select_db(mysqldb,db_name) )
++    if ( mysql_select_db(&mysqldb,db_name) )
+ 	{
+    		if (debug & DEBUG_AUTHEN_FLAG)
+ 		   report(LOG_DEBUG, "MySQL: cannot find database named %s",db_name);
+@@ -86,7 +86,7 @@
+ 
+ /*  Query database */
+ 
+-    if (mysql_query(mysqldb,mysqlcmd))
++    if (mysql_query(&mysqldb,mysqlcmd))
+ 	{
+ 	if (debug & DEBUG_AUTHEN_FLAG)
+ 		report(LOG_DEBUG, "MySQL: cannot query database ");
+@@ -96,7 +96,7 @@
+ 
+     free(mysqlcmd);
+     
+-    if (!(res = mysql_store_result(mysqldb)))
++    if (!(res = mysql_store_result(&mysqldb)))
+ 	{
+ 	if (debug & DEBUG_AUTHEN_FLAG)
+   		report(LOG_DEBUG, "MySQL: cannot store result");
+@@ -134,7 +134,7 @@
+         }
+ 
+     mysql_free_result(res);
+-    mysql_close(mysqldb);
++    mysql_close(&mysqldb);
+   
+ if (debug & DEBUG_AUTHEN_FLAG)   
+      report(LOG_DEBUG, "MySQL: verify password '%s' to DES encrypted string '%s'", users_passwd, real_passwd);
+@@ -170,7 +170,7 @@
+ 	
+ /* Connect database server */
+ 
+-   if (!(mysql_connect(mysqldb,db_hostname,db_user,db_password)))
++   if (!(mysql_connect(&mysqldb,db_hostname,db_user,db_password)))
+ 	{
+ 	if (debug & DEBUG_ACCT_FLAG)
+ 		report(LOG_DEBUG, "MySQL: cannot connect as %s", db_user);
+@@ -179,7 +179,7 @@
+ 
+ /*Select tacacs db */
+ 
+-    if (mysql_select_db(mysqldb,db_name))
++    if (mysql_select_db(&mysqldb,db_name))
+ 	{
+ 	if (debug & DEBUG_ACCT_FLAG)
+ 	   report(LOG_DEBUG, "MySQL: cannot find database named %s",db_name);
+@@ -210,7 +210,7 @@
+ 
+ /*  Query database */
+ 
+-    if (mysql_query(mysqldb,mysqlcmd))
++    if (mysql_query(&mysqldb,mysqlcmd))
+ 	{
+ 	if (debug & DEBUG_ACCT_FLAG)
+ 		report(LOG_DEBUG, "MySQL: cannot query database");
+@@ -221,7 +221,7 @@
+ 	free(mysqlcmd);
+ 
+ /* Check if accounting is sucess */
+-    if ( mysql_affected_rows( mysqldb ) < 0 )
++    if ( mysql_affected_rows( &mysqldb ) < 0 )
+ 	{
+ 	if (debug & DEBUG_ACCT_FLAG)
+ 		report(LOG_DEBUG, "MySQL: Insert isn't sucess");
+diff -uNr tac_plus_v9/db_null.c tac_plus_v9a/db_null.c
+--- tac_plus_v9/db_null.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/db_null.c	Wed Oct 30 12:07:29 2002
+@@ -6,7 +6,7 @@
+ **  DO_NOT_USE_THIS_FOR_WORK!
+ */
+ 
+-#if defined(DB_NULL) && defined(DB)
++#if defined(DB_NULL) && defined(USE_DB)
+ #include "tac_plus.h"
+ 
+ int null_db_verify(user, users_passwd, db_user, db_password, db_hostname,
+diff -uNr tac_plus_v9/db_pgsql.c tac_plus_v9a/db_pgsql.c
+--- tac_plus_v9/db_pgsql.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/db_pgsql.c	Wed Oct 30 12:02:25 2002
+@@ -1,4 +1,4 @@
+-#if defined(DB_PGSQL) && defined(DB)
++#if defined(DB_PGSQL) && defined(USE_DB)
+ 
+ /*
+ 		Writen by Devrim SERAL(devrim@gazi.edu.tr)
+diff -uNr tac_plus_v9/parse.c tac_plus_v9a/parse.c
+--- tac_plus_v9/parse.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/parse.c	Wed Oct 30 12:03:57 2002
+@@ -93,7 +93,7 @@
+ #ifdef MAXSESS
+     declare("maxsess", S_maxsess);
+ #endif
+-#ifdef DB
++#ifdef USE_DB
+     declare("db", S_db);
+     declare("db_accounting",S_db_accounting);
+ #endif
+@@ -174,7 +174,7 @@
+     case S_maxsess:
+ 	return ("maxsess");
+ #endif
+-#ifdef DB
++#ifdef USE_DB
+     case S_db:
+         return ("db");
+     case S_db_accounting:
+diff -uNr tac_plus_v9/parse.h tac_plus_v9a/parse.h
+--- tac_plus_v9/parse.h	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/parse.h	Wed Oct 30 12:04:11 2002
+@@ -78,7 +78,7 @@
+ #ifdef USE_PAM
+ #define S_pam		  43
+ #endif	 /*USE_PAM */
+-#ifdef DB
++#ifdef USE_DB
+ #define S_db		  44
+ #define S_db_accounting	  45
+ #endif  /*DB*/
+diff -uNr tac_plus_v9/pwlib.c tac_plus_v9a/pwlib.c
+--- tac_plus_v9/pwlib.c	Thu Nov 29 14:26:44 2001
++++ tac_plus_v9a/pwlib.c	Wed Oct 30 12:02:54 2002
+@@ -31,7 +31,7 @@
+ #endif /* USE_PAM   */
+ 
+ /* For database verification */
+-#ifdef DB
++#ifdef USE_DB
+ int db_verify();
+ #endif /* DB */
+ 
+@@ -152,7 +152,7 @@
+ 	    return (passwd_file_verify(name, passwd, data, file));
+ 	}
+         break;
+-#ifdef DB
++#ifdef USE_DB
+ 	case (S_db):
+    /* ugly check for database connect string */
+    if( strstr(file, "://") ){
+@@ -280,7 +280,7 @@
+ 	return (data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+     }
+ 
+-#ifdef DB
++#ifdef USE_DB
+     p = tac_find_substring("db ", cfg_passwd);
+     if (p) {
+         /* try to verify this password from database */

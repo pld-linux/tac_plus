@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# tac_plus        This shell script takes care of starting and stopping
+#		                 tac_plus (TACACS+ daemon).
+#
+# chkconfig: 235 80 20
+# description: tac_plus is TACACS+ daemon.
+# processname: tac_plus
+# config: /etc/tacacs/tac_plus.cfg
+# pidfile: /var/run/tac_plus.pid
+# debug : 0
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+# Some config parameters
+#For config file
+tacacs_config="/etc/tacacs/tac_plus.cfg"
+#For debug option
+debug=0
+
+[ -f /usr/sbin/tac_plus ] || exit 0
+
+[ -f $tacacs_config ] || exit 0
+
+
+# See how we were called.
+case "$1" in
+  start)
+        # Start daemon.
+	if [ $debug -gt 0 ]
+        then
+        echo -n "Starting TACACS+ with debug level $debug : "
+	daemon tac_plus -C $tacacs_config -d $debug
+	else
+	echo -n "Starting TACACS+ :"
+	daemon tac_plus -C $tacacs_config
+	fi
+	echo
+        touch /var/lock/subsys/tac_plus
+        ;;
+  stop)
+        # Stop daemons.
+        echo -n "Shutting down TACACS+: "
+        killproc tac_plus
+        rm -f /var/lock/subsys/tac_plus
+        echo
+        ;;
+  status)
+	status tac_plus	
+	exit $?
+	;;
+  restart)
+	$0 stop
+	$0 start  
+	;;
+  
+  reload)
+	echo "TACACS+ now reloading......"
+	kill -SIGUSR1 `cat /var/run/tac_plus.pid`
+	exit $?
+	;;
+  test)
+	echo "TACACS+ config being testing..."
+	/usr/sbin/tac_plus -P -C $tacacs_config
+	;;
+  *)
+        echo "Usage: tac_plus {start|stop|status|restart|reload|test}"
+        exit 1
+esac
+
+exit 0

@@ -1,0 +1,21 @@
+# This is tac_plus logrotate config file
+# For more info please refer logrotate man page
+/var/log/tac_plus.log {
+	size 3M
+	missingok
+	errors root@localhost
+	compress
+	postrotate
+		/usr/bin/killall -HUP tac_plus 2> /dev/null || true
+	endscript
+}
+
+/var/log/tac_acc.log {
+        size 5M
+	missingok
+        errors root@localhost
+	nocompress	
+	postrotate
+                /usr/bin/killall -HUP tac_plus 2> /dev/null || true
+        endscript
+}

@@ -1,0 +1,146 @@
+                   LDAP Authentification with Tacacs+
+                   ----------------------------------
+
+
+Author : Harpes Patrick (patrick.harpes@tudor.lu)
+         Jahnen Andreas (andreas.jahnen@tudor.lu)
+Date   : 16.03.2001
+
+License: 
+--------
+
+   tac_ldap is free software; you can redistribute it
+   and/or modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; either version 2,
+   or (at your option) any later version.     
+
+
+This document aim to describe how to perform LDAP authentification for tacacs+.
+
+
+Requirements:
+-------------
+
+1) tac_plus.F5.0.0.alpha.tar.gz
+   This package includes the original CISCO tacacs+ package from http://www.gazi.edu.tr/tacacs/
+2) openldap package
+   This package has been developped using the openldap libraries version 2.0.7
+   OpenLDAP is available from www.openldap.org
+3) GCC and other GNU developpment tools (make...)
+4) A running LDAP server (test has been made using Lotus Domino LDAP server version 5.0.x and 
+   OpenLDAP)
+
+Overview:
+---------
+                                            ------------            ----------------
+                                            - Server   -            - Notes DOMINO -
+              ----------------              - running  -____LDAP____- LDAP Server  -
+              - CISCO Dialup -__tacacs+_____- tacacs+  -            -    or        -
+              -   Router     -              -          -            - other LDAP   -
+              ----------------              ------------            - Server       -
+                                                                    ---------------
+
+The CISCO router sends tacacs+ request to the tacacs+ server. This one uses the LDAP
+server to authentificate the user.
+
+
+HowTo configure the CISCO router?
+---------------------------------
+
+There are good documentations available on how to set up the CISCO router for using 
+tacacs+. This documents can be found on the tacacs+ homepage http://www.gazi.edu.tr/tacacs/
+
+HowTo install the tacacs+ package with LDAP support?
+----------------------------------------------------
+
+To enable the LDAP support on the tacacs+ package, you have to perform the following steps:
+
+   1. Install the Open LDAP package (version 2.0.7) (www.openldap.org)
+      Refer to the INSTALL document to build this package.
+
+   2. Unpack the tacacs+ package in /usr/local/src
+      # tar -zxvf  tac_plus.F5.0.0.alpha.tar.gz  
+
+   3. Use the configure script to create the Makefiles
+
+      # cd /usr/local/src/tac_plus.F5.0.0.alpha/   
+      # ./configure --with-ldap
+
+      You can use ./configure --help to get more options
+
+   4. Compile the package
+
+      # make tac_plus
+
+   5. Set your LD_LIBRARY_PATH to include the LDAP libraries
+
+      # LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+
+
+HowTo configure tacacs+ for using the LDAP support
+--------------------------------------------------
+
+To use the LDAP authentification, use the following simple tacacs+ configuration file
+
+   key = "your tacacs key"
+   accounting file = /var/log/tac-plus/tac_plus.log
+   default authentification = ldap "ldap://<Hostname of your LDAP server>"
+   user=DEFAULT {
+          service = ppp protocol = ip {
+          }
+   }
+
+
+For more information on the configuration file please use the complete tacacs+ documentation.
+
+
+How to start the tacacs+ daemon
+-------------------------------
+
+Make sure your LD_LIBRARY_PATH includes the LDAP libraries.
+As root, start the tacacs daemon:
+   # /usr/local/src/tac_plus.F5.0.0.alpha/tac_plus -C tac_plus.cfg
+
+
+How to configure the LDAP server
+--------------------------------
+
+a) Notes Domino LDAP server
+---------------------------
+
+You have to enable the Domino server task "LDAP" with the Administration Tool. You 
+can do this with the command "laod ldap" at the server console or with the help of 
+the Tools Menu of the server tab (Tools -> Task -> Start "LDAP Server"). 
+
+You can define which attributes of your Domino Directory are accessible by 
+anonymous users and if it is allowed to write to your Domino Directory using LDAP in 
+a Configuration document. You have to specify "Use these settings as the default 
+settings for all servers" in the Basic tab of the Configuration document to display 
+the LDAP options tab. There you are able to adjust the settings for a your LDAP server.
+
+For additional information see the IBM Red Book "Getting the most from your Domino 
+Directory" (11/2000), which you can downlaod from http://www.redbooks.ibm.com.
+
+
+b) Open LDAP
+------------
+
+It is also possible to use OpenLDAP for this kind of authentification. Please look at 
+the documentation at http://www.openldap.org for details how to install the server.
+
+
+Security
+---------
+
+The here described tacacs+ queries are not quering any of the fields stored in your LDAP 
+server. We only try to log in and this is the "test" we perform here. 
+
+Pleae note that the passwords are not send encrypted. You have to make sure that it is 
+not possible to sniff them. In general is there no support from tacacs+ to support encrypted 
+passwords. 
+It is maybe possible to use OpenLDAP with TLS support to encrypt the passwords and use a 
+secure LDAP server. This is also supported by Domino and OpenLDAP. But this is not implemented.
+
+Good luck,
+ 
+ 	Harpes Patrick (patrick.harpes@tudor.lu) and Jahnen Andreas (andreas.jahnen@tudor.lu)
