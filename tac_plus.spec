@@ -1,13 +1,13 @@
 
 %define subver	alpha
 
-Summary:	Cisco Tacacs+ Daemon
-Summary(pl):	Demon Cisco Tacacs+
+Summary:	Tacacs+ Daemon
+Summary(pl):	Demon Tacacs+
 Name:		tac_plus
 Version:	F4.0.3
 Release:	0.alpha.9a.1
 Epoch:		0
-License:	BSD-like
+License:	BSD-like, GPL
 Group:		Networking/Daemons
 Source0:	http://www.gazi.edu.tr/tacacs/src/%{name}.%{version}.%{subver}.tar.Z
 # Source0-md5:	451d92503b5832a848c1b76ce58a4636
