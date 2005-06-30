@@ -18,14 +18,19 @@ Source4:	README.PAM
 Source5:	%{name}.sql
 Source6:	%{name}.rotate
 Source7:	README.LDAP
-Source8:	%{name}
+Source8:	%{name}.sysconfig
 Patch0:		%{name}.patch
 Patch1:		%{name}_v9a.patch
+Patch2:		%{name}-mysql4.patch
+Patch3:		%{name}-ldap-alt.patch
 URL:		http://www.gazi.edu.tr/tacacs/
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	libwrap-devel
+BuildRequires:	mysql-devel
+BuildRequires:	openldap-devel
 BuildRequires:	pam-devel
+BuildRequires:	postgresql-devel
 PreReq:		rc-scripts
 Requires(pre):	fileutils
 Requires(post,preun):	/sbin/chkconfig
@@ -44,6 +49,8 @@ Authentication, Authorization and Accounting).
 %setup -q -n tac_plus.%{version}.%{subver}
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
+%patch3 -p1
 
 rm -f configure
 
@@ -55,7 +62,10 @@ cp /usr/share/automake/config.sub .
 	--with-pam \
 	--enable-maxsess \
 	--with-libwrap \
-	--without-db
+	--with-db \
+	--with-ldap \
+	--with-pgsql \
+	--with-mysql
 
 # configure script have some options describe below
 # --with-pam  : For PAM support
@@ -95,8 +105,6 @@ install {%{SOURCE4},%{SOURCE5},%{SOURCE7}} .
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%pre
-
 %post
 /sbin/chkconfig --add tac_plus
 echo "Type \"/etc/rc.d/init.d/tac_plus start\" to start tac_plus" 1>&2
@@ -115,9 +123,9 @@ fi
 %attr(755,root,root) %{_sbindir}/generate_passwd
 %attr(755,root,root) %{_sbindir}/tac_plus
 %dir %{_sysconfdir}/tacacs
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tacacs/tac_plus.cfg
-%config(noreplace) %verify(not size mtime md5) /etc/logrotate.d/tac_plus
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tac_plus
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/tac_plus
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/tacacs/tac_plus.cfg
+%config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/tac_plus
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/pam.d/tac_plus
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/tac_plus
 %attr(754,root,root) /etc/rc.d/init.d/tac_plus
 %{_mandir}/man1/*
