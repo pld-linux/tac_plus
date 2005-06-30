@@ -1,0 +1,309 @@
+diff -uNr tac_plus.F4.0.3.alpha.v9b/ldap.c tac_plus.F4.0.3.alpha.v9c/ldap.c
+--- tac_plus.F4.0.3.alpha.v9b/ldap.c	2004-02-06 13:16:01.000000000 -0600
++++ tac_plus.F4.0.3.alpha.v9c/ldap.c	2004-02-06 13:43:45.000000000 -0600
+@@ -1,119 +1,186 @@
+-/*
+-     Verify that this user/password is valid per a database LDAP server
+-     Return 1 if verified, 0 otherwise.
+-     
+-     Format of connection string (look like internet URL):
+-
+-       ldap://LDAP-hostname
+-     
+-     -------------------------------------------------------
+-     patrick.harpes@tudor.lu            http://www.santel.lu
+-                                        http://www.tudor.lu
+-     
+-
+-
+-     Dependencies: You need to get the OpenLDAP libraries
+-                   from http://www.openldap.org
+- 
+-      License: tac_ldap is free software; you can redistribute it
+-               and/or modify it under the terms of the GNU General Public License
+-               as published by the Free Software Foundation; either version 2,
+-               or (at your option) any later version.
+---------------------------------------------------------------------------
+-				Changes:
+- Ok i am back again..:)
+- I changed lot of thing.. First off all i add port feature to ldap string.
+- And also add more check for buffer overflows.
+-
+-Connect format would be:
+-       ldap://LDAP-hostname:100
+-
+-Port name isn't required.. I would like to change format with : 
+-       ldap://LDAP-hostname:100/dn_for_user&dn_for_passwd
+-
+- devrim seral <devrim@gazi.edu.tr> 
+-
+-*/ 
+-
+-
+-#if defined(USE_LDAP)
+-#include <stdio.h>
+-#include <string.h>
+-#include <lber.h>
+-#include <ldap.h>
+-#include <ldap_cdefs.h>
+-
+-#include "tac_plus.h"
+-#include "ldap.h"
+-
+-
+-int
+-ldap_verify(user, users_passwd, str_conn)
+-char *user, *users_passwd;      /* Username and gived password   */
+-char *str_conn;                 /* String connection to database */
+-{
+-  char *buf;
+-  char *ldapServer;
+-  char *ldap_port;
+-  LDAP *ld;
+-  int port;
+-  int err;
+-
+-/* Don't allow null username and passwd */ 
+-  if ( *user == '0' || *users_passwd == '0' ) return (1);
+-
+-  buf=(char *)malloc(strlen(str_conn)+1);
+-  if (buf == NULL ){ 
+-	report(LOG_DEBUG, "Error can't allocate memory");
+-        return(1);
+-  }
+-  
+-  strcpy(buf,str_conn);
+-  ldapServer=strstr(buf, "://");
+-  
+-  if(ldapServer == NULL && strlen(ldapServer) <4 ) {
+-	if (debug) {
+-		report(LOG_DEBUG, "Error parse ldap server");
+-		return(1);
+-	}
+-  } 
+-  
+- ldapServer=ldapServer+3;
+-
+- ldap_port=(char *)strstr(ldapServer, ":");
+-
+- if (ldap_port != NULL ) {
+-		*ldap_port='\0';
+-		port=atoi(++ldap_port);
+- } else {
+-	port = LDAP_PORT;
+- }
+- 
+- if ( debug & DEBUG_AUTHEN_FLAG ) 
+-  report(LOG_DEBUG, "In verify_ldap : Before ldap_init : ldapserver = %s port= %d", ldapServer, port);
+-
+-
+-  if( (ld = ldap_init(ldapServer, port)) == NULL)
+-    {
+-      report(LOG_DEBUG, "Unable to connect to LDAP server:%s port:%d",ldapServer, port);
+-      return 1;
+-    }
+-  
+-  err=ldap_simple_bind_s(ld, user, users_passwd);
+-  
+-  if(err != LDAP_SUCCESS)
+-    {
+-      if ( debug & DEBUG_AUTHEN_FLAG ) 
+-      	report(LOG_DEBUG,"Error while bind : %d %s",err, ldap_err2string(err) );
+-      return 1;
+-    }         
+-  else
+-    {
+-      /* Success */
+-     if ( debug & DEBUG_AUTHEN_FLAG ) 
+-     		report(LOG_DEBUG, "LDAP authentication Sucess ");
+-     ldap_unbind_s(ld); 
+-     return 0;
+-    }
+-}
+-#endif /* LDAP */
++/*----------------------------------------------------------------------------
++
++  ldap-tacacs.c: ldap tacacs module for tac_plus
++
++  Version: 1.1
++
++  Author: Edmar Lourenco Borges
++          edmar_borges@optiglobe.com.br
++
++  Usage:  in tac_plus do:
++        mv ldap.c ldap.c.original
++        mv ldap-tacacs.c ldap.c
++
++  Configuration: in tac_plus.cfg use:
++        default authentification = ldap "ldap://hostname[:port]/base=<base ldap>/attribute=<uid|cn|mail>[/tls=yes]
++
++        Where:
++        hostname  = hostanme of ldap server, should be specified.
++        [:port]   = port that ldap server use, optional, default 389.
++        base      = base of ldap, should be specified, example dc=optiglobe,dc=com
++        attribute = attribute to use to authenticate user, should be specified, example uid or mail or cn or etc...
++        tls       = use ssl/tls with STARTLS in connection.
++
++        Examples:
++        default authentification = ldap "ldap://ldap-server:1389/base=dc=optiglobe,c=br/attribute=uid/tls=yes
++        default authentification = ldap "ldap://ldap-server/base=dc=optiglobe,c=br/attribute=uid
++
++  Dependencies:
++                You need to get the OpenLDAP libraries from
++                http://www.openldap.org
++                If you want to use STARTLS, please use libraries from
++                http://www.openssl.org
++
++  Compilation:
++         gcc -I/opt/openldap/include -L/opt/openldap/lib -L/opt/openssl/lib -L/opt/sasl/lib \
++             -llber -lldap -lldap_r -lnsl -lsocket -lssl -o ldap-tacacs ldap-tacacs.c
++
++
++  License: ldap-tacacs.c is free software; you can redistribute it and/or
++           modify it under the terms of the GNU General Public License
++           as published by the Free Software Foundation; either version
++           2, or (at your option) any later version.
++
++----------------------------------------------------------------------*/
++
++
++#if defined(USE_LDAP)
++#include <stdio.h>
++#include <string.h>
++#include <lber.h>
++#include <ldap.h>
++#include <ldap_cdefs.h>
++
++#include "tac_plus.h"
++#include "ldap.h"
++
++
++#define LDAP_OK   0
++#define LDAP_FAIL 1
++
++
++LDAP *ldap_connect(char *ldap_server, int ldap_port, char *ldap_tls) {
++  int  rc, ldap_version = LDAP_VERSION3;
++  LDAP *ldap;
++
++
++  if ((ldap = ldap_init(ldap_server,ldap_port)) == NULL) {
++        report(LOG_DEBUG, "Connection failed to ldap server:%s, port:%d\n", ldap_server, LDAP_PORT);
++        return NULL;
++  }
++  if (!ldap_tls)
++        return ldap;
++  if ((rc = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version)) != LDAP_SUCCESS) {
++          report(LOG_DEBUG, "Cannot set ldap option - LDAP error %d: %s\n", rc, ldap_err2string(rc));
++          return NULL;
++  }
++  if ((rc = ldap_start_tls_s(ldap, NULL, NULL)) != LDAP_SUCCESS) {
++          report(LOG_DEBUG, "Cannot start TLS connection - LDAP error %d: %s\n", rc, ldap_err2string(rc));
++          return NULL;
++  }
++  return ldap;
++}
++
++void ldap_close(LDAP *ldap) {
++          ldap_unbind(ldap);
++}
++
++int ldap_verify_password(LDAP *ldap, char *ldap_base, char *ldap_attribute, char *userid, char *password)  {
++  LDAPMessage *result = NULL;
++  LDAPMessage *entry  = NULL;
++  char *filter, *attributes[2], *bind_dn;
++  int  return_code  = LDAP_OK;
++
++  if (!userid || !password) {
++      return LDAP_FAIL;
++  }
++  filter = (char *)malloc(strlen(ldap_attribute) + strlen(userid) + 8);
++  if ( filter == NULL ){
++        report(LOG_DEBUG, "Error can't allocate memory");
++        return LDAP_FAIL;
++  }
++  sprintf(filter, "(%s=%s)", ldap_attribute, userid);
++  attributes[0] = NULL;
++
++  if (ldap_search_s(ldap, ldap_base, LDAP_SCOPE_SUBTREE, filter, attributes, 0, &result) != LDAP_SUCCESS) {
++       report(LOG_DEBUG, "Not found find entry matching given user id: %s\n", userid);
++       return_code = LDAP_FAIL;
++  }
++  if ((return_code == LDAP_OK) && ((entry = ldap_first_entry(ldap, result)) == NULL)) {
++       report(LOG_DEBUG, "Can't to get first entry of user id: %s\n", userid);
++       return_code = LDAP_FAIL;
++  }
++  if ((return_code == LDAP_OK) && ((bind_dn = ldap_get_dn(ldap, entry)) == NULL)) {
++       report(LOG_DEBUG, "Can't to get DN of entry of user id: %s\n",userid);
++       return_code = LDAP_FAIL;
++  }
++  if ((return_code == LDAP_OK) && (ldap_simple_bind_s(ldap, bind_dn, password) == LDAP_SUCCESS)) {
++      report(LOG_DEBUG, "%s authenticated!\n", userid);
++  } else {
++      report(LOG_DEBUG, "Authentication token manipulation error:%s!\n", userid);
++      return_code =  LDAP_FAIL;
++  }
++  free(filter);
++  return return_code;
++}
++
++int ldap_verify(char *userid, char *password, char *connection) {
++  char *ldap_server;
++  char *ldap_port;
++  char *ldap_base;
++  char *ldap_attribute;
++  char *ldap_tls;
++  char *buffer;
++  int  rc, port;
++  LDAP *ldap;
++
++  buffer = (char *)malloc(strlen(connection)+1);
++  if ( buffer == NULL ){
++        report(LOG_DEBUG, "Error can't allocate memory");
++        return LDAP_FAIL;
++  }
++  strcpy(buffer,connection);
++  ldap_server = strstr(buffer, "://");
++  if ( ldap_server == NULL && strlen(ldap_server) < 4 ) {
++        if (debug) report(LOG_DEBUG, "Error parse ldap server");
++        free(buffer);
++        return LDAP_FAIL;
++  }
++  ldap_server += 3;
++  ldap_port = strstr(ldap_server, ":");
++  ldap_base = strstr(ldap_server, "/base=");
++  ldap_attribute = strstr(ldap_server, "/attribute=");
++  ldap_tls  = strstr(ldap_server, "/tls=");
++  if ( ldap_port == NULL )
++        port = LDAP_PORT;
++  if ( ldap_port != NULL ) {
++       *ldap_port = '\0';
++        port      = atoi(++ldap_port);
++  }
++  if ( ldap_base != NULL ) {
++        *ldap_base = '\0';
++        ldap_base  += 6;
++  }
++  if ( ldap_attribute != NULL ) {
++        *ldap_attribute = '\0';
++        ldap_attribute  += 11;
++  }
++  if ( ldap_tls != NULL ) {
++        *ldap_tls = '\0';
++        ldap_tls  += 5;
++  }
++  if ( ldap_base == NULL || ldap_attribute == NULL ) {
++        if (debug) report(LOG_DEBUG, "Error parse ldap base or ldap attribute to use to authenticate");
++        free(buffer);
++        return LDAP_FAIL;
++  }
++  if ( (ldap = ldap_connect(ldap_server, port, ldap_tls)) == NULL) {
++        free(buffer);
++        return LDAP_FAIL;
++  }
++  rc = ldap_verify_password(ldap,ldap_base, ldap_attribute, userid, password);
++  free(buffer);
++  ldap_close(ldap);
++  return rc;
++}
++#endif /* LDAP */
