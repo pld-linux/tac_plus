@@ -1,0 +1,21 @@
+diff -uNr tac_plus.F4.0.3.alpha/db_mysql.c tac_plus.F4.0.3.alpha.v9b/db_mysql.c
+--- tac_plus.F4.0.3.alpha/db_mysql.c	2004-02-06 13:16:01.000000000 -0600
++++ tac_plus.F4.0.3.alpha.v9b/db_mysql.c	2004-02-06 13:35:01.000000000 -0600
+@@ -46,7 +46,7 @@
+ 	
+ /* Connect database server */
+ 
+-   if ( !( mysql_connect(&mysqldb,db_hostname,db_user,db_password) ) )
++   if ( !( mysql_real_connect(&mysqldb,db_hostname,db_user,db_password,db_name,0,NULL,0) ) )
+ 	{
+    	        if (debug & DEBUG_AUTHEN_FLAG)
+ 		    report(LOG_DEBUG, "MySQL: cannot connect as %s", db_user);
+@@ -170,7 +170,7 @@
+ 	
+ /* Connect database server */
+ 
+-   if (!(mysql_connect(&mysqldb,db_hostname,db_user,db_password)))
++   if (!(mysql_real_connect(&mysqldb,db_hostname,db_user,db_password,db_name,0,NULL,0)))
+ 	{
+ 	if (debug & DEBUG_ACCT_FLAG)
+ 		report(LOG_DEBUG, "MySQL: cannot connect as %s", db_user);
