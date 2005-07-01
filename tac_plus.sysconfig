@@ -1,0 +1,7 @@
+# Customized settings for tac_plus
+
+# Define nice level for tac_plus
+SERVICE_RUN_NICE_LEVEL="+5"
+
+TACACS_DEBUG_LEVEL=0
+TACACS_PORT=49
