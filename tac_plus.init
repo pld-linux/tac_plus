@@ -1,66 +1,66 @@
 #!/bin/sh
 #
-# tac_plus        This shell script takes care of starting and stopping
-#		                 tac_plus (TACACS+ daemon).
+# tac_plus	This shell script takes care of starting and stopping
+#		tac_plus (TACACS+ daemon).
 #
-# chkconfig: 235 80 20
-# description: tac_plus is TACACS+ daemon.
-# processname: tac_plus
-# config: /etc/tacacs/tac_plus.cfg
-# pidfile: /var/run/tac_plus.pid
-# debug : 0
+# chkconfig:	235 80 20
+# description:	tac_plus is TACACS+ daemon.
+# processname:	tac_plus
+# config:	/etc/tacacs/tac_plus.cfg
+# pidfile:	/var/run/tac_plus.pid
 
-# Source function library.
+# Source function library
 . /etc/rc.d/init.d/functions
 
-# Source networking configuration.
+# Source networking config
 . /etc/sysconfig/network
 
+# Get service config
+[ -f /etc/sysconfig/tac_plus ] && . /etc/sysconfig/tac_plus
 
 # Check that networking is up.
-[ ${NETWORKING} = "no" ] && exit 0
-
-# Some config parameters
-. /etc/sysconfig/tac_plus
-
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down tac_plus
+		exit 1
+	fi
+else
+	exit 0
+fi
+						
 tacacs_config="/etc/tacacs/tac_plus.cfg"
-
-[ -f /etc/sysconfig/tac_plus ] || exit 0
-
-[ -f /usr/sbin/tac_plus ] || exit 0
 
 [ -f $tacacs_config ] || exit 0
 
-if [ -z $TACACS_PORT ] 
-then
+if [ -z $TACACS_PORT ]; then
     TACACS_PORT=49
 fi
 
-if [ -z $TACACS_DEBUG_LEVEL ] 
-then
+if [ -z $TACACS_DEBUG_LEVEL ]; then
     TACACS_DEBUG_LEVEL=0
 fi
 
 # See how we were called.
 case "$1" in
   start)
-        # Start daemon.
-	if [ $TACACS_DEBUG_LEVEL -gt 0 ]
-        then
-    	    echo -n "Starting TACACS+ with debug level $TACACS_DEBUG_LEVEL : "
-	    daemon tac_plus -C $tacacs_config  -d $TACACS_DEBUG_LEVEL -p $TACACS_PORT
+	if [ ! -f /var/lock/subsys/tac_plus ]; then
+		msg_starting TACACS+
+		daemon tac_plus -C $tacacs_config  -d $TACACS_DEBUG_LEVEL -p $TACACS_PORT
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/tac_plus
 	else
-	    echo -n "Starting TACACS+ :"
-	    daemon tac_plus -C $tacacs_config -p $TACACS_PORT
+		msg_already_running TACACS+
 	fi
-        touch /var/lock/subsys/tac_plus
-        ;;
+	;;
   stop)
-        # Stop daemons.
-        echo -n "Shutting down TACACS+: "
-        killproc tac_plus
-        rm -f /var/lock/subsys/tac_plus
-        ;;
+	if [ -f /var/lock/subsys/tac_plus ]; then
+		msg_stopping TACACS+
+		killproc tac_plus
+		rm -f /var/lock/subsys/tac_plus
+	else
+		msg_not_running TACACS+
+	fi
+	;;
   status)
 	status tac_plus	
 	exit $?
@@ -71,17 +71,21 @@ case "$1" in
 	;;
   
   reload)
-	echo "TACACS+ now reloading......"
-	kill -SIGUSR1 `cat /var/run/tac_plus.pid`
+	if [ -f /var/lock/subsys/tac_plus ]; then
+		msg_reloading TACACS+
+		killproc --pidfile /var/run/tac_plus.pid -SIGUSR1 tac_plus
+	else
+		msg_not_running TACACS+
+	fi
 	exit $?
 	;;
   test)
-	echo "TACACS+ config being testing..."
+	echo "TACACS+ config being testing"
 	/usr/sbin/tac_plus -P -C $tacacs_config -p $TACACS_PORT
 	;;
   *)
-        echo "Usage: tac_plus {start|stop|status|restart|reload|test}"
-        exit 1
+	echo "Usage: %s {start|stop|status|restart|reload|test}"
+	exit 1
 esac
 
 exit 0
