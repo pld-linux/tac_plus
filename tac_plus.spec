@@ -1,11 +1,13 @@
 
+%bcond_with     skey		# with S/KEY support
+
 %define subver	alpha
 
 Summary:	Tacacs+ Daemon
 Summary(pl):	Demon Tacacs+
 Name:		tac_plus
 Version:	F4.0.3
-Release:	0.alpha.9a.1
+Release:	0.alpha.9a.2
 Epoch:		0
 License:	BSD-like, GPL
 Group:		Networking/Daemons
@@ -31,6 +33,9 @@ BuildRequires:	mysql-devel
 BuildRequires:	openldap-devel
 BuildRequires:	pam-devel
 BuildRequires:	postgresql-devel
+%if %{with skey}
+BuildRequires:	skey-static
+%endif
 PreReq:		rc-scripts
 Requires(pre):	fileutils
 Requires(post,preun):	/sbin/chkconfig
@@ -85,7 +90,9 @@ cp /usr/share/automake/config.sub .
 # --with-libwrap[=PATH]   Compile in libwrap (tcp_wrappers) support
 # --enable-finger	Enable finger at maxsess check
 
-%{__make} tac_plus
+%{__make} \
+	%{?with_skey:DEFINES="-DSKEY" LIBS="/usr/lib/libskey.a" INCLUDES="-I/usr/include/security/"} \
+	tac_plus
 
 %install
 rm -rf $RPM_BUILD_ROOT
