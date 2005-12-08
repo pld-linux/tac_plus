@@ -27,7 +27,7 @@ if is_yes "${NETWORKING}"; then
 else
 	exit 0
 fi
-						
+
 tacacs_config="/etc/tacacs/tac_plus.cfg"
 
 [ -f $tacacs_config ] || exit 0
@@ -62,14 +62,14 @@ case "$1" in
 	fi
 	;;
   status)
-	status tac_plus	
+	status tac_plus
 	exit $?
 	;;
   restart)
 	$0 stop
-	$0 start  
+	$0 start
 	;;
-  
+
   reload)
 	if [ -f /var/lock/subsys/tac_plus ]; then
 		msg_reloading TACACS+
