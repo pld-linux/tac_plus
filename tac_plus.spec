@@ -26,19 +26,20 @@ Patch1:		%{name}_v9a.patch
 Patch2:		%{name}-mysql4.patch
 Patch3:		%{name}-ldap-alt.patch
 URL:		http://www.gazi.edu.tr/tacacs/
-BuildRequires:	automake
 BuildRequires:	autoconf
+BuildRequires:	automake
 BuildRequires:	libwrap-devel
 BuildRequires:	mysql-devel
 BuildRequires:	openldap-devel
 BuildRequires:	pam-devel
 BuildRequires:	postgresql-devel
+BuildRequires:	rpmbuild(macros) >= 1.268
 %if %{with skey}
 BuildRequires:	skey-static
 %endif
-PreReq:		rc-scripts
-Requires(pre):	fileutils
 Requires(post,preun):	/sbin/chkconfig
+Requires(pre):	fileutils
+Requires:	rc-scripts
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -51,13 +52,14 @@ celów uwierzytelniania, autoryzacji i rozliczania (AAA -
 Authentication, Authorization and Accounting).
 
 %prep
-%setup -q -n tac_plus.%{version}.%{subver}
+%setup -q -n %{name}.%{version}.%{subver}
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 
 rm -f configure
+install -p {%{SOURCE4},%{SOURCE5},%{SOURCE7}} .
 
 %build
 cp /usr/share/automake/config.sub .
@@ -107,20 +109,16 @@ install %{SOURCE3} $RPM_BUILD_ROOT/etc/pam.d/tac_plus
 install %{SOURCE6} $RPM_BUILD_ROOT/etc/logrotate.d/tac_plus
 install %{SOURCE8} $RPM_BUILD_ROOT/etc/sysconfig/tac_plus
 
-install {%{SOURCE4},%{SOURCE5},%{SOURCE7}} .
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
 /sbin/chkconfig --add tac_plus
-echo "Type \"/etc/rc.d/init.d/tac_plus start\" to start tac_plus" 1>&2
+%service tac_plus restart
 
 %preun
 if [ "$1" = "0" ]; then
-	if [ -f /var/lock/subsys/tac_plus ]; then
-		/etc/rc.d/init.d/tac_plus stop
-	fi
+	%service tac_plus stop
 	/sbin/chkconfig --del tac_plus
 fi
 
