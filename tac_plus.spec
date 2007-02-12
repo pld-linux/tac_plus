@@ -4,7 +4,7 @@
 %define subver	alpha
 
 Summary:	Tacacs+ Daemon
-Summary(pl):	Demon Tacacs+
+Summary(pl.UTF-8):   Demon Tacacs+
 Name:		tac_plus
 Version:	F4.0.3
 Release:	0.alpha.9a.3
@@ -46,9 +46,9 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 TACACS+ daemon using with Cisco's NASs (or other vendors) for AAA
 (Authentication, Authorization and Accounting) propose.
 
-%description -l pl
-Demon TACACS+ uøywany wraz z NAS-ami Cisco (lub innych producentÛw) do
-celÛw uwierzytelniania, autoryzacji i rozliczania (AAA -
+%description -l pl.UTF-8
+Demon TACACS+ u≈ºywany wraz z NAS-ami Cisco (lub innych producent√≥w) do
+cel√≥w uwierzytelniania, autoryzacji i rozliczania (AAA -
 Authentication, Authorization and Accounting).
 
 %prep
