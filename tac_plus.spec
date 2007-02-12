@@ -4,7 +4,7 @@
 %define subver	alpha
 
 Summary:	Tacacs+ Daemon
-Summary(pl.UTF-8):   Demon Tacacs+
+Summary(pl.UTF-8):	Demon Tacacs+
 Name:		tac_plus
 Version:	F4.0.3
 Release:	0.alpha.9a.3
