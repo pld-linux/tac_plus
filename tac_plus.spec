@@ -30,7 +30,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	libwrap-devel
 BuildRequires:	mysql-devel
-BuildRequires:	openldap-devel
+BuildRequires:	openldap-devel >= 2.4.6
 BuildRequires:	pam-devel
 BuildRequires:	postgresql-devel
 BuildRequires:	rpmbuild(macros) >= 1.268
